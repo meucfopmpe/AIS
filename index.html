@@ -24,11 +24,8 @@
 
         /* Pinos no Mapa */
         .pin { position: absolute; width: 22px; height: 22px; background: #c8ced3; border: 3px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
-        
         .pin:hover { transform: translate(-50%, -50%) scale(1.3); background: #88929b; z-index: 10; }
         .pin.active { outline: 3px solid #e74c3c; outline-offset: 2px; transform: translate(-50%, -50%) scale(1.4); z-index: 10; background: #e74c3c; border-color: #fff; }
-        
-        /* Cores de Acerto */
         .pin.correct-dim { background: var(--dim-color); border-color: #fff; pointer-events: none; }
         .pin.correct-dinter1 { background: var(--dinter1-color); border-color: #fff; pointer-events: none; }
         .pin.correct-dinter2 { background: var(--dinter2-color); border-color: #fff; pointer-events: none; }
@@ -58,25 +55,41 @@
 
         .feedback { min-height: 28px; font-weight: bold; text-align: center; margin-top: 15px; font-size: 1.3em; transition: color 0.2s; }
         .status-panel { margin-top: auto; padding-top: 20px; border-top: 2px solid #f0f0f0; }
-        .score { font-size: 22px; font-weight: 800; color: #2c3e50; text-align: center; margin-bottom: 20px; display: flex; justify-content: space-around; }
         
-        .legend { display: flex; justify-content: center; gap: 15px; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 25px; }
+        /* Layout de Timer e Score */
+        .score-board { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .score-col { text-align: center; }
+        .score-val { font-size: 24px; font-weight: 900; display: block; }
+        .score-label { font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+
+        .legend { display: flex; justify-content: center; gap: 15px; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 20px; }
         .legend span { display: flex; align-items: center; gap: 5px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
-        .btn-reset { width: 100%; padding: 12px; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn-reset, .btn-ranking { flex: 1; padding: 12px; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        .btn-reset { background: #64748b; }
         .btn-reset:hover { background: #475569; }
+        .btn-ranking { background: #f39c12; }
+        .btn-ranking:hover { background: #d35400; }
+
+        /* Modal de Ranking */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; color: #1a3c5e; }
+        .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        .btn-close:hover { color: #e74c3c; }
+        
+        .ranking-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .ranking-table th { background: #f4f7fa; padding: 10px; color: #1a3c5e; font-size: 14px; }
+        .ranking-table td { padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #444; }
+        .rank-medal { font-size: 20px; }
+        .empty-ranking { text-align: center; color: #999; font-style: italic; padding: 20px; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Animação de tremor para erro */
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
         .shake { animation: shake 0.4s ease-in-out; }
     </style>
 </head>
@@ -95,9 +108,9 @@
         <div class="panel">
             
             <div class="difficulty-selector">
-                <label><input type="radio" name="diff" value="facil" checked onchange="changeDifficulty()"> Fácil</label>
-                <label><input type="radio" name="diff" value="medio" onchange="changeDifficulty()"> Médio</label>
-                <label><input type="radio" name="diff" value="dificil" onchange="changeDifficulty()"> Difícil</label>
+                <label><input type="radio" name="diff" value="Fácil" checked onchange="changeDifficulty()"> Fácil</label>
+                <label><input type="radio" name="diff" value="Médio" onchange="changeDifficulty()"> Médio</label>
+                <label><input type="radio" name="diff" value="Difícil" onchange="changeDifficulty()"> Difícil</label>
             </div>
 
             <h2 id="panel-title">Aguardando Seleção...</h2>
@@ -125,23 +138,48 @@
             <div class="feedback" id="feedback" style="color: #64748b;">Selecione um ponto no mapa.</div>
 
             <div class="status-panel">
-                <div class="score">
-                    <span style="color: #e74c3c;">Erros: <span id="error-count">0</span></span>
-                    <span style="color: #10b981;">Acertos: <span id="score-count">0</span> / 26</span>
+                <div class="score-board">
+                    <div class="score-col">
+                        <span class="score-val" id="time-display" style="color: #3498db;">00:00</span>
+                        <span class="score-label">Tempo</span>
+                    </div>
+                    <div class="score-col">
+                        <span class="score-val" id="error-count" style="color: #e74c3c;">0</span>
+                        <span class="score-label">Erros</span>
+                    </div>
+                    <div class="score-col">
+                        <span class="score-val" id="score-count" style="color: #10b981;">0/26</span>
+                        <span class="score-label">Acertos</span>
+                    </div>
                 </div>
+
                 <div class="legend">
                     <span><div class="dot" style="background:var(--dim-color)"></div> DIM</span>
                     <span><div class="dot" style="background:var(--dinter1-color)"></div> DINTER I</span>
                     <span><div class="dot" style="background:var(--dinter2-color)"></div> DINTER II</span>
                 </div>
-                <button class="btn-reset" onclick="window.location.reload()">🔄 Reiniciar Treinamento</button>
+                
+                <div class="btn-group">
+                    <button class="btn-reset" onclick="window.location.reload()">🔄 Reiniciar</button>
+                    <button class="btn-ranking" onclick="openRanking()">🏆 Ranking</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="modal-overlay" id="ranking-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏆 Meu Ranking Pessoal</h2>
+                <button class="btn-close" onclick="closeRanking()">&times;</button>
+            </div>
+            <div id="ranking-body">
+                </div>
+        </div>
+    </div>
+
 <script>
-     // Banco de dados ATUALIZADO com áreas de múltiplas unidades (PDF)
-     const db = {
+    const db = {
         // DINTER II (Sertão)
         "26": { sede: "Petrolina", unit: "5 BPM", dir: "dinter2", x: 16.1464, y: 61.0000 },
         "25": { sede: "Cabrobó / Sta Maria", unit: "2 CIPM e 7 CIPM", dir: "dinter2", x: 27.0419, y: 55.3723 },
@@ -177,8 +215,15 @@
     
     let currentAIS = null;
     let solved = new Set();
-    let currentDifficulty = 'facil';
+    let currentDifficulty = 'Fácil';
     let errorCount = 0;
+    
+    // Variáveis do Cronômetro
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let isTimerRunning = false;
+    let totalAreas = Object.keys(db).length; // 26
+
     const mapContainer = document.getElementById('map-container');
 
     for (const ais in db) {
@@ -198,8 +243,30 @@
         }
     }
 
+    // --- CONTROLE DO CRONÔMETRO ---
+    function startTimer() {
+        if (isTimerRunning) return;
+        isTimerRunning = true;
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const s = String(secondsElapsed % 60).padStart(2, '0');
+            document.getElementById('time-display').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+    }
+
+    // --- LÓGICA DO JOGO ---
     function selectAIS(id) {
         if (solved.has(id)) return; 
+        
+        // Inicia o tempo no primeiro clique no mapa
+        if (!isTimerRunning && solved.size === 0) startTimer();
+
         currentAIS = id;
         
         document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
@@ -208,7 +275,6 @@
         document.getElementById('panel-title').innerText = "Identifique as Informações";
         document.getElementById('display-sede').innerText = db[id].sede;
         
-        // Elementos da interface
         const lineAis = document.getElementById('line-ais');
         const lineUnit = document.getElementById('line-unit');
         const groupAis = document.getElementById('input-group-ais');
@@ -222,32 +288,25 @@
         inUnit.value = "";
         document.getElementById('feedback').innerText = "";
         
-        // Reset classes
         groupAis.classList.remove('active');
         groupUnit.classList.remove('active');
-        btnVerify.classList.add('active'); // Mostra o botão
+        btnVerify.classList.add('active'); 
 
-        // Configura visualização de acordo com a dificuldade
-        if (currentDifficulty === 'facil') {
+        if (currentDifficulty === 'Fácil') {
             lineAis.style.display = 'block';
             lineUnit.style.display = 'none';
             document.getElementById('display-ais').innerText = id;
-            
             groupUnit.classList.add('active');
             inUnit.focus();
-            
-        } else if (currentDifficulty === 'medio') {
+        } else if (currentDifficulty === 'Médio') {
             lineAis.style.display = 'none';
             lineUnit.style.display = 'block';
             document.getElementById('display-unit').innerText = db[id].unit;
-            
             groupAis.classList.add('active');
             inAis.focus();
-            
-        } else if (currentDifficulty === 'dificil') {
+        } else if (currentDifficulty === 'Difícil') {
             lineAis.style.display = 'none';
             lineUnit.style.display = 'none';
-            
             groupAis.classList.add('active');
             groupUnit.classList.add('active');
             inAis.focus();
@@ -256,11 +315,8 @@
         document.getElementById('info-box').classList.add('active');
     }
 
-    // Permite verificar pressionando ENTER
     function checkEnter(event) {
-        if (event.key === 'Enter') {
-            checkAnswer();
-        }
+        if (event.key === 'Enter') checkAnswer();
     }
 
     function checkAnswer() {
@@ -269,32 +325,24 @@
         const target = db[currentAIS];
         let isCorrect = false;
 
-        // Limpa formatação das unidades para validação (extrai apenas num+letra ex: ["6bpm", "25bpm"])
         const inputUnitValue = document.getElementById('input-unit').value.toLowerCase().replace(/\s/g, '');
         const inputMatches = inputUnitValue.match(/\d+(bpm|cipm)/g) || [];
         const requiredMatches = target.unit.toLowerCase().replace(/\s/g, '').match(/\d+(bpm|cipm)/g) || [];
 
-        // Lógica: Todos os batalhões necessários devem estar no input, e o usuário não pode digitar batalhões extras
-        const unitsCorrect = requiredMatches.every(req => inputMatches.includes(req)) && requiredMatches.length === inputMatches.length;
+        const unitsCorrect = requiredMatches.every(req => inputMatches.includes(req)) && requiredMatches.length === inputMatches.length && requiredMatches.length > 0;
 
         const inputAisStr = document.getElementById('input-ais').value;
         const inputAis = parseInt(inputAisStr.trim(), 10);
         const correctAis = parseInt(currentAIS, 10);
         const aisCorrect = (inputAis === correctAis);
 
-        // Previne verificar campos vazios
-        if (currentDifficulty === 'facil' && inputUnitValue === '') return;
-        if (currentDifficulty === 'medio' && isNaN(inputAis)) return;
-        if (currentDifficulty === 'dificil' && (inputUnitValue === '' || isNaN(inputAis))) return;
+        if (currentDifficulty === 'Fácil' && inputUnitValue === '') return;
+        if (currentDifficulty === 'Médio' && isNaN(inputAis)) return;
+        if (currentDifficulty === 'Difícil' && (inputUnitValue === '' || isNaN(inputAis))) return;
 
-        // Validação por Nível
-        if (currentDifficulty === 'facil') {
-            isCorrect = unitsCorrect;
-        } else if (currentDifficulty === 'medio') {
-            isCorrect = aisCorrect;
-        } else if (currentDifficulty === 'dificil') {
-            isCorrect = (unitsCorrect && aisCorrect);
-        }
+        if (currentDifficulty === 'Fácil') isCorrect = unitsCorrect;
+        else if (currentDifficulty === 'Médio') isCorrect = aisCorrect;
+        else if (currentDifficulty === 'Difícil') isCorrect = (unitsCorrect && aisCorrect);
 
         if (isCorrect) {
             document.getElementById('feedback').innerText = "✅ Correto!";
@@ -305,7 +353,22 @@
             pin.classList.add('correct-' + target.dir);
             
             solved.add(currentAIS);
-            document.getElementById('score-count').innerText = solved.size;
+            document.getElementById('score-count').innerText = `${solved.size}/26`;
+
+            // CONDIÇÃO DE VITÓRIA
+            if (solved.size === totalAreas) {
+                stopTimer();
+                saveRanking();
+                document.getElementById('panel-title').innerText = "🎉 MAPA CONCLUÍDO!";
+                document.getElementById('feedback').innerText = "Excelente trabalho! Ranking atualizado.";
+                document.getElementById('feedback').style.color = "#3498db";
+                document.getElementById('info-box').classList.remove('active');
+                document.getElementById('input-group-ais').classList.remove('active');
+                document.getElementById('input-group-unit').classList.remove('active');
+                document.getElementById('btn-verify').classList.remove('active');
+                setTimeout(openRanking, 1500); // Mostra o ranking automaticamente ao fim
+                return;
+            }
 
             setTimeout(() => {
                 document.getElementById('info-box').classList.remove('active');
@@ -317,20 +380,84 @@
                 document.getElementById('feedback').style.color = "#64748b";
                 currentAIS = null;
             }, 1200);
+
         } else {
-            // Lógica de Erro
             errorCount++;
             document.getElementById('error-count').innerText = errorCount;
             document.getElementById('feedback').innerText = "❌ Incorreto! Tente novamente.";
             document.getElementById('feedback').style.color = "#e74c3c";
             
-            // Efeito de tremor no formulário
             const interactiveArea = document.getElementById('interactive-area');
             interactiveArea.classList.add('shake');
-            setTimeout(() => {
-                interactiveArea.classList.remove('shake');
-            }, 400);
+            setTimeout(() => interactiveArea.classList.remove('shake'), 400);
         }
+    }
+
+    // --- SISTEMA DE RANKING (LOCALSTORAGE) ---
+    function saveRanking() {
+        const timeFormatted = document.getElementById('time-display').innerText;
+        const matchData = {
+            date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' }),
+            difficulty: currentDifficulty,
+            errors: errorCount,
+            timeStr: timeFormatted,
+            timeSec: secondsElapsed
+        };
+
+        let ranking = JSON.parse(localStorage.getItem('pmpeRanking')) || [];
+        ranking.push(matchData);
+        
+        // Ordena o ranking: 1º Menos erros, 2º Menor tempo
+        ranking.sort((a, b) => {
+            if (a.errors !== b.errors) return a.errors - b.errors;
+            return a.timeSec - b.timeSec;
+        });
+
+        // Mantém apenas o Top 10
+        if (ranking.length > 10) ranking = ranking.slice(0, 10);
+        
+        localStorage.setItem('pmpeRanking', JSON.stringify(ranking));
+    }
+
+    function openRanking() {
+        const ranking = JSON.parse(localStorage.getItem('pmpeRanking')) || [];
+        const tbody = document.getElementById('ranking-body');
+        
+        if (ranking.length === 0) {
+            tbody.innerHTML = "<div class='empty-ranking'>Nenhuma rodada concluída ainda. Complete o mapa para entrar no ranking!</div>";
+        } else {
+            let html = `
+                <table class="ranking-table">
+                    <tr>
+                        <th>Pos</th>
+                        <th>Dificuldade</th>
+                        <th>Erros</th>
+                        <th>Tempo</th>
+                        <th>Data</th>
+                    </tr>
+            `;
+            
+            ranking.forEach((match, index) => {
+                let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}º`;
+                html += `
+                    <tr>
+                        <td class="rank-medal">${medal}</td>
+                        <td>${match.difficulty}</td>
+                        <td style="color: ${match.errors > 0 ? '#e74c3c' : '#10b981'}">${match.errors}</td>
+                        <td>⏱️ ${match.timeStr}</td>
+                        <td style="font-size: 12px; color: #888;">${match.date}</td>
+                    </tr>
+                `;
+            });
+            html += "</table>";
+            tbody.innerHTML = html;
+        }
+
+        document.getElementById('ranking-modal').classList.add('active');
+    }
+
+    function closeRanking() {
+        document.getElementById('ranking-modal').classList.remove('active');
     }
 </script>
 </body>
