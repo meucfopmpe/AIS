@@ -36,6 +36,10 @@
         /* Painel Lateral */
         .panel { flex: 1; min-width: 320px; max-width: 400px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
         .panel h2 { color: #1a3c5e; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.4em; }
+
+        /* Seletor de Dificuldade */
+        .difficulty-selector { display: flex; justify-content: space-between; background: #f4f7fa; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #2c3e50; border-left: 5px solid #64748b;}
+        .difficulty-selector label { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.95em;}
         
         .info-box { background: #f4f7fa; padding: 18px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #1a3c5e; display: none; }
         .info-box.active { display: block; animation: fadeIn 0.3s ease; }
@@ -75,14 +79,27 @@
         </div>
 
         <div class="panel">
+            
+            <div class="difficulty-selector">
+                <label><input type="radio" name="diff" value="facil" checked onchange="changeDifficulty()"> Fácil</label>
+                <label><input type="radio" name="diff" value="medio" onchange="changeDifficulty()"> Médio</label>
+                <label><input type="radio" name="diff" value="dificil" onchange="changeDifficulty()"> Difícil</label>
+            </div>
+
             <h2 id="panel-title">Aguardando Seleção...</h2>
             
             <div class="info-box" id="info-box">
-                <p>AIS: <span id="display-ais">--</span></p>
-                <p>Sede: <span id="display-sede">--</span></p>
+                <p id="line-ais">AIS: <span id="display-ais">--</span></p>
+                <p id="line-sede">Sede: <span id="display-sede">--</span></p>
+                <p id="line-unit" style="display:none;">Unidade: <span id="display-unit">--</span></p>
             </div>
             
-            <div class="form-group" id="input-group">
+            <div class="form-group" id="input-group-ais">
+                <label>Qual a AIS? (Ex: 5 ou 05)</label>
+                <input type="number" id="input-ais" placeholder="Nº da AIS..." autocomplete="off" oninput="checkAnswer()">
+            </div>
+
+            <div class="form-group" id="input-group-unit">
                 <label>Qual a Unidade? (Ex: 5 BPM)</label>
                 <input type="text" id="input-unit" placeholder="Digite aqui..." autocomplete="off" oninput="checkAnswer()">
             </div>
@@ -102,8 +119,7 @@
     </div>
 
 <script>
-    // Banco de dados integrado com as suas coordenadas exatas
-    const db = {
+     const db = {
         // DINTER II (Sertão)
         "26": { sede: "Petrolina", unit: "5 BPM", dir: "dinter2", x: 16.1464, y: 61.0000 },
         "25": { sede: "Cabrobó", unit: "2 CIPM", dir: "dinter2", x: 27.0419, y: 55.3723 },
@@ -136,12 +152,12 @@
         "02": { sede: "Recife (Campo Grande)", unit: "13 BPM", dir: "dim", x: 87.6892, y: 58.8921 },
         "01": { sede: "Recife (São José)", unit: "16 BPM", dir: "dim", x: 89.6583, y: 64.0598 }
     };
-
+    
     let currentAIS = null;
     let solved = new Set();
+    let currentDifficulty = 'facil';
     const mapContainer = document.getElementById('map-container');
 
-    // Injeta os pinos no mapa
     for (const ais in db) {
         const pin = document.createElement('div');
         pin.className = 'pin';
@@ -152,53 +168,111 @@
         mapContainer.appendChild(pin);
     }
 
+    function changeDifficulty() {
+        currentDifficulty = document.querySelector('input[name="diff"]:checked').value;
+        // Se houver um pino selecionado que ainda não foi resolvido, atualiza a interface dele
+        if (currentAIS && !solved.has(currentAIS)) {
+            selectAIS(currentAIS);
+        }
+    }
+
     function selectAIS(id) {
         if (solved.has(id)) return; 
         currentAIS = id;
         
-        // Atualiza a interface visual dos pinos
         document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
         document.getElementById('pin-' + id).classList.add('active');
 
-        // Preenche os dados no painel
         document.getElementById('panel-title').innerText = "Identifique a Unidade";
-        document.getElementById('display-ais').innerText = id;
         document.getElementById('display-sede').innerText = db[id].sede;
         
-        document.getElementById('info-box').classList.add('active');
-        document.getElementById('input-group').classList.add('active');
+        // Elementos da interface
+        const lineAis = document.getElementById('line-ais');
+        const lineUnit = document.getElementById('line-unit');
+        const groupAis = document.getElementById('input-group-ais');
+        const groupUnit = document.getElementById('input-group-unit');
         
+        const inAis = document.getElementById('input-ais');
         const inUnit = document.getElementById('input-unit');
+        
+        inAis.value = "";
         inUnit.value = "";
         document.getElementById('feedback').innerText = "";
-        inUnit.focus(); // Coloca o cursor direto no campo de texto
+        
+        // Reset classes
+        groupAis.classList.remove('active');
+        groupUnit.classList.remove('active');
+
+        // Configura visualização de acordo com a dificuldade
+        if (currentDifficulty === 'facil') {
+            lineAis.style.display = 'block';
+            lineUnit.style.display = 'none';
+            document.getElementById('display-ais').innerText = id;
+            
+            groupUnit.classList.add('active');
+            inUnit.focus();
+            
+        } else if (currentDifficulty === 'medio') {
+            lineAis.style.display = 'none';
+            lineUnit.style.display = 'block';
+            document.getElementById('display-unit').innerText = db[id].unit;
+            
+            groupAis.classList.add('active');
+            inAis.focus();
+            
+        } else if (currentDifficulty === 'dificil') {
+            lineAis.style.display = 'none';
+            lineUnit.style.display = 'none';
+            
+            groupAis.classList.add('active');
+            groupUnit.classList.add('active');
+            inAis.focus();
+        }
+
+        document.getElementById('info-box').classList.add('active');
     }
 
     function checkAnswer() {
         if (!currentAIS || solved.has(currentAIS)) return;
 
         const target = db[currentAIS];
-        // Formata a entrada do usuário para facilitar a comparação (remove pontuações e espaços)
-        const inputUnit = document.getElementById('input-unit').value.toLowerCase().replace(/[^0-9a-z]/g, ''); 
-        const correctUnit = target.unit.toLowerCase().replace(/[^0-9a-z]/g, '');
+        let isCorrect = false;
 
-        if (inputUnit === correctUnit) {
-            document.getElementById('feedback').innerText = "✅ Correto!";
-            document.getElementById('feedback').style.color = "#10b981"; // Verde sucesso
+        if (currentDifficulty === 'facil') {
+            const inputUnit = document.getElementById('input-unit').value.toLowerCase().replace(/[^0-9a-z]/g, ''); 
+            const correctUnit = target.unit.toLowerCase().replace(/[^0-9a-z]/g, '');
+            isCorrect = (inputUnit === correctUnit);
+
+        } else if (currentDifficulty === 'medio') {
+            // Converte ambos para inteiro para permitir digitar "5" ou "05" e aceitar ambos
+            const inputAis = parseInt(document.getElementById('input-ais').value.trim(), 10);
+            const correctAis = parseInt(currentAIS, 10);
+            isCorrect = (inputAis === correctAis);
+
+        } else if (currentDifficulty === 'dificil') {
+            const inputUnit = document.getElementById('input-unit').value.toLowerCase().replace(/[^0-9a-z]/g, ''); 
+            const correctUnit = target.unit.toLowerCase().replace(/[^0-9a-z]/g, '');
+            const inputAis = parseInt(document.getElementById('input-ais').value.trim(), 10);
+            const correctAis = parseInt(currentAIS, 10);
             
-            // Pinta o pino com a cor da diretoria e desativa o clique
+            isCorrect = (inputUnit === correctUnit && inputAis === correctAis);
+        }
+
+        if (isCorrect) {
+            document.getElementById('feedback').innerText = "✅ Correto!";
+            document.getElementById('feedback').style.color = "#10b981";
+            
             const pin = document.getElementById('pin-' + currentAIS);
             pin.classList.remove('active');
             pin.classList.add('correct-' + target.dir);
             
-            // Computa o acerto
             solved.add(currentAIS);
             document.getElementById('score-count').innerText = solved.size;
 
-            // Retorna ao estado inicial após um breve delay
             setTimeout(() => {
                 document.getElementById('info-box').classList.remove('active');
-                document.getElementById('input-group').classList.remove('active');
+                document.getElementById('input-group-ais').classList.remove('active');
+                document.getElementById('input-group-unit').classList.remove('active');
                 document.getElementById('panel-title').innerText = "Aguardando Seleção...";
                 document.getElementById('feedback').innerText = "Selecione o próximo ponto.";
                 document.getElementById('feedback').style.color = "#64748b";
