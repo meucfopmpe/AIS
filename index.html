@@ -41,20 +41,24 @@
         .difficulty-selector { display: flex; justify-content: space-between; background: #f4f7fa; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; color: #2c3e50; border-left: 5px solid #64748b;}
         .difficulty-selector label { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.95em;}
         
-        .info-box { background: #f4f7fa; padding: 18px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #1a3c5e; display: none; }
+        .info-box { background: #f4f7fa; padding: 18px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #1a3c5e; display: none; }
         .info-box.active { display: block; animation: fadeIn 0.3s ease; }
         .info-box p { margin: 8px 0; font-size: 1.15em; color: #444; }
         .info-box span { font-weight: bold; color: #1a3c5e; font-size: 1.1em; }
 
-        .form-group { margin-bottom: 20px; display: none; }
+        .form-group { margin-bottom: 15px; display: none; }
         .form-group.active { display: block; animation: fadeIn 0.3s ease; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 10px; color: #2c3e50; font-size: 1.1em; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50; font-size: 1.1em; }
         .form-group input { width: 100%; padding: 15px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-transform: uppercase; transition: border-color 0.2s; }
         .form-group input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
 
+        .btn-verify { width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; margin-top: 5px; display: none; }
+        .btn-verify.active { display: block; animation: fadeIn 0.3s ease; }
+        .btn-verify:hover { background: #2980b9; }
+
         .feedback { min-height: 28px; font-weight: bold; text-align: center; margin-top: 15px; font-size: 1.3em; transition: color 0.2s; }
-        .status-panel { margin-top: auto; padding-top: 25px; border-top: 2px solid #f0f0f0; }
-        .score { font-size: 28px; font-weight: 800; color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        .status-panel { margin-top: auto; padding-top: 20px; border-top: 2px solid #f0f0f0; }
+        .score { font-size: 22px; font-weight: 800; color: #2c3e50; text-align: center; margin-bottom: 20px; display: flex; justify-content: space-around; }
         
         .legend { display: flex; justify-content: center; gap: 15px; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 25px; }
         .legend span { display: flex; align-items: center; gap: 5px; }
@@ -64,6 +68,16 @@
         .btn-reset:hover { background: #475569; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Animação de tremor para erro */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
     </style>
 </head>
 <body>
@@ -88,26 +102,33 @@
 
             <h2 id="panel-title">Aguardando Seleção...</h2>
             
-            <div class="info-box" id="info-box">
-                <p id="line-ais">AIS: <span id="display-ais">--</span></p>
-                <p id="line-sede">Sede: <span id="display-sede">--</span></p>
-                <p id="line-unit" style="display:none;">Unidade: <span id="display-unit">--</span></p>
-            </div>
-            
-            <div class="form-group" id="input-group-ais">
-                <label>Qual a AIS? (Ex: 5 ou 05)</label>
-                <input type="number" id="input-ais" placeholder="Nº da AIS..." autocomplete="off" oninput="checkAnswer()">
-            </div>
+            <div id="interactive-area">
+                <div class="info-box" id="info-box">
+                    <p id="line-ais">AIS: <span id="display-ais">--</span></p>
+                    <p id="line-sede">Sede: <span id="display-sede">--</span></p>
+                    <p id="line-unit" style="display:none;">Unidade: <span id="display-unit">--</span></p>
+                </div>
+                
+                <div class="form-group" id="input-group-ais">
+                    <label>Qual a AIS? (Ex: 5 ou 05)</label>
+                    <input type="number" id="input-ais" placeholder="Nº da AIS..." autocomplete="off" onkeyup="checkEnter(event)">
+                </div>
 
-            <div class="form-group" id="input-group-unit">
-                <label>Qual a Unidade? (Ex: 5 BPM)</label>
-                <input type="text" id="input-unit" placeholder="Digite aqui..." autocomplete="off" oninput="checkAnswer()">
+                <div class="form-group" id="input-group-unit">
+                    <label>Qual a Unidade? (Ex: 6 BPM e 25 BPM)</label>
+                    <input type="text" id="input-unit" placeholder="Digite aqui..." autocomplete="off" onkeyup="checkEnter(event)">
+                </div>
+
+                <button class="btn-verify" id="btn-verify" onclick="checkAnswer()">Verificar Resposta</button>
             </div>
 
             <div class="feedback" id="feedback" style="color: #64748b;">Selecione um ponto no mapa.</div>
 
             <div class="status-panel">
-                <div class="score">Acertos: <span id="score-count">0</span> / 26</div>
+                <div class="score">
+                    <span style="color: #e74c3c;">Erros: <span id="error-count">0</span></span>
+                    <span style="color: #10b981;">Acertos: <span id="score-count">0</span> / 26</span>
+                </div>
                 <div class="legend">
                     <span><div class="dot" style="background:var(--dim-color)"></div> DIM</span>
                     <span><div class="dot" style="background:var(--dinter1-color)"></div> DINTER I</span>
@@ -119,33 +140,34 @@
     </div>
 
 <script>
+     // Banco de dados ATUALIZADO com áreas de múltiplas unidades (PDF)
      const db = {
         // DINTER II (Sertão)
         "26": { sede: "Petrolina", unit: "5 BPM", dir: "dinter2", x: 16.1464, y: 61.0000 },
-        "25": { sede: "Cabrobó", unit: "2 CIPM", dir: "dinter2", x: 27.0419, y: 55.3723 },
-        "24": { sede: "Ouricuri", unit: "7 BPM", dir: "dinter2", x: 21.0034, y: 35.8822 },
+        "25": { sede: "Cabrobó / Sta Maria", unit: "2 CIPM e 7 CIPM", dir: "dinter2", x: 27.0419, y: 55.3723 },
+        "24": { sede: "Ouricuri / Araripina", unit: "7 BPM e 9 CIPM", dir: "dinter2", x: 21.0034, y: 35.8822 },
         "23": { sede: "Salgueiro", unit: "8 BPM", dir: "dinter2", x: 30.7175, y: 40.0894 },
-        "22": { sede: "Belém do São Francisco", unit: "1 CIPM", dir: "dinter2", x: 38.5938, y: 57.1125 },
+        "22": { sede: "Belém do S.F. / Petrolândia", unit: "1 CIPM e 4 CIPM", dir: "dinter2", x: 38.5938, y: 57.1125 },
         "21": { sede: "Serra Talhada", unit: "14 BPM", dir: "dinter2", x: 41.2192, y: 36.3493 },
         "20": { sede: "Afogados da Ingazeira", unit: "23 BPM", dir: "dinter2", x: 51.4583, y: 32.4414 },
         "19": { sede: "Arcoverde", unit: "3 BPM", dir: "dinter2", x: 50.0144, y: 55.8789 },
         
         // DINTER I (Agreste/Mata)
-        "18": { sede: "Garanhuns", unit: "9 BPM", dir: "dinter1", x: 60.1222, y: 65.2539 },
+        "18": { sede: "Garanhuns / Lajedo", unit: "9 BPM e 11 CIPM", dir: "dinter1", x: 60.1222, y: 65.2539 },
         "17": { sede: "Santa Cruz do Capibaribe", unit: "24 BPM", dir: "dinter1", x: 64.9793, y: 39.4151 },
-        "16": { sede: "Surubim", unit: "22 BPM", dir: "dinter1", x: 69.5738, y: 37.4282 },
-        "15": { sede: "Belo Jardim", unit: "15 BPM", dir: "dinter1", x: 59.3346, y: 44.7769 },
+        "16": { sede: "Surubim / Limoeiro", unit: "22 BPM e 6 CIPM", dir: "dinter1", x: 69.5738, y: 37.4282 },
+        "15": { sede: "Belo Jardim / Pesqueira", unit: "15 BPM e 8 CIPM", dir: "dinter1", x: 59.3346, y: 44.7769 },
         "14": { sede: "Caruaru", unit: "4 BPM", dir: "dinter1", x: 66.4233, y: 48.7375 },
-        "13": { sede: "Palmares", unit: "10 BPM", dir: "dinter1", x: 71.5428, y: 57.8394 },
-        "12": { sede: "Vitória de Santo Antão", unit: "21 BPM", dir: "dinter1", x: 72.1992, y: 44.7638 },
-        "11": { sede: "Nazaré da Mata", unit: "2 BPM", dir: "dinter1", x: 75.3497, y: 29.4809 },
+        "13": { sede: "Palmares / Tamandaré", unit: "10 BPM e 10 CIPM", dir: "dinter1", x: 71.5428, y: 57.8394 },
+        "12": { sede: "Vitória / Gravatá", unit: "21 BPM e 5 CIPM", dir: "dinter1", x: 72.1992, y: 44.7638 },
+        "11": { sede: "Nazaré da Mata / Goiana", unit: "2 BPM e 27 BPM", dir: "dinter1", x: 75.3497, y: 29.4809 },
         
         // DIM (Metropolitana)
         "10": { sede: "Cabo de Sto Agostinho", unit: "18 BPM", dir: "dim", x: 77.1875, y: 53.8921 },
         "09": { sede: "São Lourenço da Mata", unit: "20 BPM", dir: "dim", x: 75.6123, y: 39.3361 },
-        "08": { sede: "Paulista", unit: "17 BPM", dir: "dim", x: 80.4693, y: 34.4019 },
+        "08": { sede: "Paulista / Igarassu", unit: "17 BPM e 26 BPM", dir: "dim", x: 80.4693, y: 34.4019 },
         "07": { sede: "Olinda", unit: "1 BPM", dir: "dim", x: 79.8129, y: 42.8032 },
-        "06": { sede: "Jaboatão dos Guararapes", unit: "6 BPM", dir: "dim", x: 77.9751, y: 46.244 },
+        "06": { sede: "Jaboatão dos Guararapes", unit: "6 BPM e 25 BPM", dir: "dim", x: 77.9751, y: 46.244 },
         "05": { sede: "Recife (Apipucos)", unit: "11 BPM", dir: "dim", x: 83.9016, y: 49.7375 },
         "04": { sede: "Recife (Várzea)", unit: "12 BPM", dir: "dim", x: 81.6507, y: 60.8526 },
         "03": { sede: "Recife (Pina)", unit: "19 BPM", dir: "dim", x: 84.8012, y: 69.4875 },
@@ -156,6 +178,7 @@
     let currentAIS = null;
     let solved = new Set();
     let currentDifficulty = 'facil';
+    let errorCount = 0;
     const mapContainer = document.getElementById('map-container');
 
     for (const ais in db) {
@@ -170,7 +193,6 @@
 
     function changeDifficulty() {
         currentDifficulty = document.querySelector('input[name="diff"]:checked').value;
-        // Se houver um pino selecionado que ainda não foi resolvido, atualiza a interface dele
         if (currentAIS && !solved.has(currentAIS)) {
             selectAIS(currentAIS);
         }
@@ -183,7 +205,7 @@
         document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
         document.getElementById('pin-' + id).classList.add('active');
 
-        document.getElementById('panel-title').innerText = "Identifique a Unidade";
+        document.getElementById('panel-title').innerText = "Identifique as Informações";
         document.getElementById('display-sede').innerText = db[id].sede;
         
         // Elementos da interface
@@ -191,6 +213,7 @@
         const lineUnit = document.getElementById('line-unit');
         const groupAis = document.getElementById('input-group-ais');
         const groupUnit = document.getElementById('input-group-unit');
+        const btnVerify = document.getElementById('btn-verify');
         
         const inAis = document.getElementById('input-ais');
         const inUnit = document.getElementById('input-unit');
@@ -202,6 +225,7 @@
         // Reset classes
         groupAis.classList.remove('active');
         groupUnit.classList.remove('active');
+        btnVerify.classList.add('active'); // Mostra o botão
 
         // Configura visualização de acordo com a dificuldade
         if (currentDifficulty === 'facil') {
@@ -232,30 +256,44 @@
         document.getElementById('info-box').classList.add('active');
     }
 
+    // Permite verificar pressionando ENTER
+    function checkEnter(event) {
+        if (event.key === 'Enter') {
+            checkAnswer();
+        }
+    }
+
     function checkAnswer() {
         if (!currentAIS || solved.has(currentAIS)) return;
 
         const target = db[currentAIS];
         let isCorrect = false;
 
+        // Limpa formatação das unidades para validação (extrai apenas num+letra ex: ["6bpm", "25bpm"])
+        const inputUnitValue = document.getElementById('input-unit').value.toLowerCase().replace(/\s/g, '');
+        const inputMatches = inputUnitValue.match(/\d+(bpm|cipm)/g) || [];
+        const requiredMatches = target.unit.toLowerCase().replace(/\s/g, '').match(/\d+(bpm|cipm)/g) || [];
+
+        // Lógica: Todos os batalhões necessários devem estar no input, e o usuário não pode digitar batalhões extras
+        const unitsCorrect = requiredMatches.every(req => inputMatches.includes(req)) && requiredMatches.length === inputMatches.length;
+
+        const inputAisStr = document.getElementById('input-ais').value;
+        const inputAis = parseInt(inputAisStr.trim(), 10);
+        const correctAis = parseInt(currentAIS, 10);
+        const aisCorrect = (inputAis === correctAis);
+
+        // Previne verificar campos vazios
+        if (currentDifficulty === 'facil' && inputUnitValue === '') return;
+        if (currentDifficulty === 'medio' && isNaN(inputAis)) return;
+        if (currentDifficulty === 'dificil' && (inputUnitValue === '' || isNaN(inputAis))) return;
+
+        // Validação por Nível
         if (currentDifficulty === 'facil') {
-            const inputUnit = document.getElementById('input-unit').value.toLowerCase().replace(/[^0-9a-z]/g, ''); 
-            const correctUnit = target.unit.toLowerCase().replace(/[^0-9a-z]/g, '');
-            isCorrect = (inputUnit === correctUnit);
-
+            isCorrect = unitsCorrect;
         } else if (currentDifficulty === 'medio') {
-            // Converte ambos para inteiro para permitir digitar "5" ou "05" e aceitar ambos
-            const inputAis = parseInt(document.getElementById('input-ais').value.trim(), 10);
-            const correctAis = parseInt(currentAIS, 10);
-            isCorrect = (inputAis === correctAis);
-
+            isCorrect = aisCorrect;
         } else if (currentDifficulty === 'dificil') {
-            const inputUnit = document.getElementById('input-unit').value.toLowerCase().replace(/[^0-9a-z]/g, ''); 
-            const correctUnit = target.unit.toLowerCase().replace(/[^0-9a-z]/g, '');
-            const inputAis = parseInt(document.getElementById('input-ais').value.trim(), 10);
-            const correctAis = parseInt(currentAIS, 10);
-            
-            isCorrect = (inputUnit === correctUnit && inputAis === correctAis);
+            isCorrect = (unitsCorrect && aisCorrect);
         }
 
         if (isCorrect) {
@@ -273,11 +311,25 @@
                 document.getElementById('info-box').classList.remove('active');
                 document.getElementById('input-group-ais').classList.remove('active');
                 document.getElementById('input-group-unit').classList.remove('active');
+                document.getElementById('btn-verify').classList.remove('active');
                 document.getElementById('panel-title').innerText = "Aguardando Seleção...";
                 document.getElementById('feedback').innerText = "Selecione o próximo ponto.";
                 document.getElementById('feedback').style.color = "#64748b";
                 currentAIS = null;
             }, 1200);
+        } else {
+            // Lógica de Erro
+            errorCount++;
+            document.getElementById('error-count').innerText = errorCount;
+            document.getElementById('feedback').innerText = "❌ Incorreto! Tente novamente.";
+            document.getElementById('feedback').style.color = "#e74c3c";
+            
+            // Efeito de tremor no formulário
+            const interactiveArea = document.getElementById('interactive-area');
+            interactiveArea.classList.add('shake');
+            setTimeout(() => {
+                interactiveArea.classList.remove('shake');
+            }, 400);
         }
     }
 </script>
