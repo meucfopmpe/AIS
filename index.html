@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador PMPE: Áreas Integradas de Segurança</title>
+    <style>
+        :root {
+            --dim-color: #3498db;
+            --dinter1-color: #f1c40f;
+            --dinter2-color: #1abc9c;
+            --bg-color: #f8f9fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; user-select: none; }
+        h1 { color: #1a3c5e; text-align: center; margin-bottom: 5px; }
+        p.subtitle { color: #666; margin-bottom: 30px; text-align: center; font-size: 1.1em;}
+
+        .container { display: flex; gap: 20px; max-width: 1300px; width: 100%; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+
+        /* Área do Mapa */
+        .map-section { flex: 2; min-width: 600px; max-width: 900px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+        .map-container { position: relative; width: 100%; display: inline-block; overflow: hidden; border-radius: 8px; background: #fff; }
+        .map-container img { width: 100%; height: auto; display: block; opacity: 0.95; pointer-events: none; }
+
+        /* Pinos no Mapa */
+        .pin { position: absolute; width: 22px; height: 22px; background: #c8ced3; border: 3px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
+        
+        .pin:hover { transform: translate(-50%, -50%) scale(1.3); background: #88929b; z-index: 10; }
+        .pin.active { outline: 3px solid #e74c3c; outline-offset: 2px; transform: translate(-50%, -50%) scale(1.4); z-index: 10; background: #e74c3c; border-color: #fff; }
+        
+        /* Cores de Acerto */
+        .pin.correct-dim { background: var(--dim-color); border-color: #fff; pointer-events: none; }
+        .pin.correct-dinter1 { background: var(--dinter1-color); border-color: #fff; pointer-events: none; }
+        .pin.correct-dinter2 { background: var(--dinter2-color); border-color: #fff; pointer-events: none; }
+
+        /* Painel Lateral */
+        .panel { flex: 1; min-width: 320px; max-width: 400px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+        .panel h2 { color: #1a3c5e; margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.4em; }
+        
+        .info-box { background: #f4f7fa; padding: 18px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #1a3c5e; display: none; }
+        .info-box.active { display: block; animation: fadeIn 0.3s ease; }
+        .info-box p { margin: 8px 0; font-size: 1.15em; color: #444; }
+        .info-box span { font-weight: bold; color: #1a3c5e; font-size: 1.1em; }
+
+        .form-group { margin-bottom: 20px; display: none; }
+        .form-group.active { display: block; animation: fadeIn 0.3s ease; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 10px; color: #2c3e50; font-size: 1.1em; }
+        .form-group input { width: 100%; padding: 15px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-transform: uppercase; transition: border-color 0.2s; }
+        .form-group input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
+
+        .feedback { min-height: 28px; font-weight: bold; text-align: center; margin-top: 15px; font-size: 1.3em; transition: color 0.2s; }
+        .status-panel { margin-top: auto; padding-top: 25px; border-top: 2px solid #f0f0f0; }
+        .score { font-size: 28px; font-weight: 800; color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        
+        .legend { display: flex; justify-content: center; gap: 15px; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 25px; }
+        .legend span { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+        .btn-reset { width: 100%; padding: 12px; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; }
+        .btn-reset:hover { background: #475569; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <h1>Simulador PMPE: Áreas Integradas</h1>
+    <p class="subtitle">Clique em uma área do mapa para identificar a Unidade Responsável.</p>
+
+    <div class="container">
+        <div class="map-section">
+            <div class="map-container" id="map-container">
+                <img id="map-image" src="mapabranco.png" alt="Mapa de Pernambuco">
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 id="panel-title">Aguardando Seleção...</h2>
+            
+            <div class="info-box" id="info-box">
+                <p>AIS: <span id="display-ais">--</span></p>
+                <p>Sede: <span id="display-sede">--</span></p>
+            </div>
+            
+            <div class="form-group" id="input-group">
+                <label>Qual a Unidade? (Ex: 5 BPM)</label>
+                <input type="text" id="input-unit" placeholder="Digite aqui..." autocomplete="off" oninput="checkAnswer()">
+            </div>
+
+            <div class="feedback" id="feedback" style="color: #64748b;">Selecione um ponto no mapa.</div>
+
+            <div class="status-panel">
+                <div class="score">Acertos: <span id="score-count">0</span> / 26</div>
+                <div class="legend">
+                    <span><div class="dot" style="background:var(--dim-color)"></div> DIM</span>
+                    <span><div class="dot" style="background:var(--dinter1-color)"></div> DINTER I</span>
+                    <span><div class="dot" style="background:var(--dinter2-color)"></div> DINTER II</span>
+                </div>
+                <button class="btn-reset" onclick="window.location.reload()">🔄 Reiniciar Treinamento</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Banco de dados integrado com as suas coordenadas exatas
+    const db = {
+        // DINTER II (Sertão)
+        "26": { sede: "Petrolina", unit: "5 BPM", dir: "dinter2", x: 16.1464, y: 61.0000 },
+        "25": { sede: "Cabrobó", unit: "2 CIPM", dir: "dinter2", x: 27.0419, y: 55.3723 },
+        "24": { sede: "Ouricuri", unit: "7 BPM", dir: "dinter2", x: 21.0034, y: 35.8822 },
+        "23": { sede: "Salgueiro", unit: "8 BPM", dir: "dinter2", x: 30.7175, y: 40.0894 },
+        "22": { sede: "Belém do São Francisco", unit: "1 CIPM", dir: "dinter2", x: 38.5938, y: 57.1125 },
+        "21": { sede: "Serra Talhada", unit: "14 BPM", dir: "dinter2", x: 41.2192, y: 36.3493 },
+        "20": { sede: "Afogados da Ingazeira", unit: "23 BPM", dir: "dinter2", x: 51.4583, y: 32.4414 },
+        "19": { sede: "Arcoverde", unit: "3 BPM", dir: "dinter2", x: 50.0144, y: 55.8789 },
+        
+        // DINTER I (Agreste/Mata)
+        "18": { sede: "Garanhuns", unit: "9 BPM", dir: "dinter1", x: 60.1222, y: 65.2539 },
+        "17": { sede: "Santa Cruz do Capibaribe", unit: "24 BPM", dir: "dinter1", x: 64.9793, y: 39.4151 },
+        "16": { sede: "Surubim", unit: "22 BPM", dir: "dinter1", x: 69.5738, y: 37.4282 },
+        "15": { sede: "Belo Jardim", unit: "15 BPM", dir: "dinter1", x: 59.3346, y: 44.7769 },
+        "14": { sede: "Caruaru", unit: "4 BPM", dir: "dinter1", x: 66.4233, y: 48.7375 },
+        "13": { sede: "Palmares", unit: "10 BPM", dir: "dinter1", x: 71.5428, y: 57.8394 },
+        "12": { sede: "Vitória de Santo Antão", unit: "21 BPM", dir: "dinter1", x: 72.1992, y: 44.7638 },
+        "11": { sede: "Nazaré da Mata", unit: "2 BPM", dir: "dinter1", x: 75.3497, y: 29.4809 },
+        
+        // DIM (Metropolitana)
+        "10": { sede: "Cabo de Sto Agostinho", unit: "18 BPM", dir: "dim", x: 77.1875, y: 53.8921 },
+        "09": { sede: "São Lourenço da Mata", unit: "20 BPM", dir: "dim", x: 75.6123, y: 39.3361 },
+        "08": { sede: "Paulista", unit: "17 BPM", dir: "dim", x: 80.4693, y: 34.4019 },
+        "07": { sede: "Olinda", unit: "1 BPM", dir: "dim", x: 79.8129, y: 42.8032 },
+        "06": { sede: "Jaboatão dos Guararapes", unit: "6 BPM", dir: "dim", x: 77.9751, y: 46.244 },
+        "05": { sede: "Recife (Apipucos)", unit: "11 BPM", dir: "dim", x: 83.9016, y: 49.7375 },
+        "04": { sede: "Recife (Várzea)", unit: "12 BPM", dir: "dim", x: 81.6507, y: 60.8526 },
+        "03": { sede: "Recife (Pina)", unit: "19 BPM", dir: "dim", x: 84.8012, y: 69.4875 },
+        "02": { sede: "Recife (Campo Grande)", unit: "13 BPM", dir: "dim", x: 87.6892, y: 58.8921 },
+        "01": { sede: "Recife (São José)", unit: "16 BPM", dir: "dim", x: 89.6583, y: 64.0598 }
+    };
+
+    let currentAIS = null;
+    let solved = new Set();
+    const mapContainer = document.getElementById('map-container');
+
+    // Injeta os pinos no mapa
+    for (const ais in db) {
+        const pin = document.createElement('div');
+        pin.className = 'pin';
+        pin.id = 'pin-' + ais;
+        pin.style.left = db[ais].x + '%';
+        pin.style.top = db[ais].y + '%';
+        pin.onclick = () => selectAIS(ais);
+        mapContainer.appendChild(pin);
+    }
+
+    function selectAIS(id) {
+        if (solved.has(id)) return; 
+        currentAIS = id;
+        
+        // Atualiza a interface visual dos pinos
+        document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
+        document.getElementById('pin-' + id).classList.add('active');
+
+        // Preenche os dados no painel
+        document.getElementById('panel-title').innerText = "Identifique a Unidade";
+        document.getElementById('display-ais').innerText = id;
+        document.getElementById('display-sede').innerText = db[id].sede;
+        
+        document.getElementById('info-box').classList.add('active');
+        document.getElementById('input-group').classList.add('active');
+        
+        const inUnit = document.getElementById('input-unit');
+        inUnit.value = "";
+        document.getElementById('feedback').innerText = "";
+        inUnit.focus(); // Coloca o cursor direto no campo de texto
+    }
+
+    function checkAnswer() {
+        if (!currentAIS || solved.has(currentAIS)) return;
+
+        const target = db[currentAIS];
+        // Formata a entrada do usuário para facilitar a comparação (remove pontuações e espaços)
+        const inputUnit = document.getElementById('input-unit').value.toLowerCase().replace(/[^0-9a-z]/g, ''); 
+        const correctUnit = target.unit.toLowerCase().replace(/[^0-9a-z]/g, '');
+
+        if (inputUnit === correctUnit) {
+            document.getElementById('feedback').innerText = "✅ Correto!";
+            document.getElementById('feedback').style.color = "#10b981"; // Verde sucesso
+            
+            // Pinta o pino com a cor da diretoria e desativa o clique
+            const pin = document.getElementById('pin-' + currentAIS);
+            pin.classList.remove('active');
+            pin.classList.add('correct-' + target.dir);
+            
+            // Computa o acerto
+            solved.add(currentAIS);
+            document.getElementById('score-count').innerText = solved.size;
+
+            // Retorna ao estado inicial após um breve delay
+            setTimeout(() => {
+                document.getElementById('info-box').classList.remove('active');
+                document.getElementById('input-group').classList.remove('active');
+                document.getElementById('panel-title').innerText = "Aguardando Seleção...";
+                document.getElementById('feedback').innerText = "Selecione o próximo ponto.";
+                document.getElementById('feedback').style.color = "#64748b";
+                currentAIS = null;
+            }, 1200);
+        }
+    }
+</script>
+</body>
+</html>
